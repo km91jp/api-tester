@@ -204,6 +204,7 @@ public class ApiRequestSender {
 		} else {
 			if (searchNode == null) {
 				targetNode = mapper.createObjectNode();
+				on.set(objectName, targetNode);
 			} else {
 				targetNode = searchNode;
 			}
