@@ -259,7 +259,7 @@ public class ApiRequestSender {
 
 	private void setQueryString(HttpMethod method, ApiTelegram telegram, Map<String, String> requestParams) {
 		List<NameValuePair> queryStrings = new ArrayList<>();
-		telegram.getRequests().stream().filter((r) -> r.getType().equalsIgnoreCase("query")).forEach((p) -> {
+		telegram.getRequests().stream().filter((r) -> r.getIn().equalsIgnoreCase("query")).forEach((p) -> {
 			if (requestParams.containsKey(p.getName())) {
 				queryStrings.add(
 						new NameValuePair(p.getName(), (String) getParamValue(p.getName(), "string", requestParams)));
