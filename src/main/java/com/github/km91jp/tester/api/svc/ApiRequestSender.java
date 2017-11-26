@@ -1,8 +1,10 @@
 package com.github.km91jp.tester.api.svc;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,6 +27,8 @@ import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.NameValuePair;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
+import org.apache.commons.httpclient.methods.RequestEntity;
+import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.Document;
 
@@ -150,7 +154,6 @@ public class ApiRequestSender {
 				telegram.getRequests(), requestParams);
 	}
 
-	@SuppressWarnings("deprecation")
 	private void setJson(PostMethod postMethod, ApiTelegram telegram, Map<String, String> requestParams) {
 		JsonNode rootNode = mapper.createObjectNode();
 		telegram.getRequests().stream().filter((r) -> r.getIn().equalsIgnoreCase("body")).forEach((p) -> {
@@ -199,8 +202,10 @@ public class ApiRequestSender {
 			}
 		});
 		try {
-			postMethod.setRequestBody(mapper.writeValueAsString(rootNode));
-		} catch (JsonProcessingException e) {
+			RequestEntity entity = new StringRequestEntity(mapper.writeValueAsString(rootNode), "application/json",
+					"UTF-8");
+			postMethod.setRequestEntity(entity);
+		} catch (JsonProcessingException | UnsupportedEncodingException e) {
 			e.printStackTrace();
 		}
 	}
