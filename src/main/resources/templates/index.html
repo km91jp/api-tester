@@ -1,0 +1,98 @@
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<title>Api-Tester</title>
+<script lang="text/javascript">
+	function show(form, neccessary) {
+		if (neccessary === "")
+			return;
+		form.submit();
+	}
+	function showApis(apiName) {
+		var form = document.createElement('form');
+		form.action = '/apis/' + apiName;
+		form.method = 'get';
+		document.body.appendChild(form);
+		form.submit();
+	}
+	function changeDisabled(name) {
+		var e1 = document.getElementById(name);
+		var e2 = document.getElementById("c-" + name);
+		if (e1 != null) {
+			e1.disabled = !e1.disabled;
+		}
+		if (e2 != null) {
+			e2.disabled = !e2.disabled;
+		}
+	}
+</script>
+</head>
+<body>
+	<h1>Api-Tester</h1>
+	<form action="/apis" id="oasSelectForm" method="get">
+		<select id="fileName" name="fileName"
+			onChange="show(this.form, this.value)">
+			<option value="">- Choose OAS file. -</option>
+			<option th:each="oasfile : ${oasfiles}" th:value="${oasfile}"
+				th:text="${oasfile}" th:selected="${oasfile == selectedFileName}">swagger.yaml</option>
+		</select>
+	</form>
+	<th:block th:unless="${#strings.isEmpty(selectedFileName)}">
+		<form>
+			<select id="apiName" name="apiName" onChange="showApis(this.value)">
+				<option>- Choose API Name. -</option>
+				<option th:each="apis : ${oasData}" th:value="${apis.key}"
+					th:text="${apis.key}" th:selected="${apis.key == selectedApi}">GET:sample-api</option>
+			</select>
+		</form>
+	</th:block>
+	<th:block th:unless='${#strings.isEmpty(selectedApi)}'>
+		<form action="/send" method="post">
+			<table th:object="${oasData['__${selectedApi}__']}">
+				<tr>
+					<td colspan="4">Scheme:<select id="scheme" name="scheme">
+							<option th:each="scheme : *{schemes}" th:text="${scheme}"
+								th:selected="${scheme == alreadyInputs['scheme']}">HTTP</option>
+					</select></td>
+				</tr>
+				<tr th:unless="*{#lists.isEmpty(consumes)}">
+					<td colspan="4">Consume:<select id="consume" name="consume">
+							<option th:each="consume : *{consumes}" th:text="${consume}"
+								th:selected="${consume == alreadyInputs['consume']}">application/x-www-form-urlencoded</option>
+					</select></td>
+				</tr>
+				<tr th:unless="*{#lists.isEmpty(produces)}">
+					<td colspan="4">Produce:<select id="produce" name="produce">
+							<option th:each="produce : *{produces}" th:text="${produce}"
+								th:selected="${produce == alreadyInputs['produce']}">application/json</option>
+					</select></td>
+				</tr>
+				<tr th:each="request : *{requests}">
+					<td><input type="checkbox"
+						th:onclick="'changeDisabled(\'' + ${request.name} + '\')'" /></td>
+					<td th:text="${request.name}"></td>
+					<td><input type="text" th:id="${request.name}"
+						th:name="${request.name}"
+						th:value="${alreadyInputs['__${request.name}__']}" /> <select
+						th:unless="${#lists.isEmpty(request.values)}"
+						th:id="'c-'+${request.name}" th:name="'c-'+${request.name}">
+							<option th:each='value : ${request.values}' th:value="${value}"
+								th:text='${value}'
+								th:selected="${value == alreadyInputs['__${request.name}__']}">option</option>
+					</select></td>
+					<td><label th:text="${request.description}" ></label></td>
+				</tr>
+				<tr>
+					<td colspan="4"><input type="hidden" name="requestApi"
+						th:value="${selectedApi}" /> <input type="hidden"
+						name="requestMethod" th:value="*{method}" /> <input type='submit'
+						value="Send a request" /></td>
+				</tr>
+			</table>
+		</form>
+	</th:block>
+	<th:block th:if="${result != null}">
+		<textarea rows="6" cols="200" th:field="${result.header}"></textarea>
+		<textarea rows="20" cols="200" th:field="${result.body}"></textarea>
+	</th:block>
+</body>
+</html>
