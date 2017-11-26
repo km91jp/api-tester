@@ -1,6 +1,5 @@
 package com.github.km91jp.tester.api.svc;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
@@ -165,29 +164,8 @@ public class ApiRequestSender {
 					String[] types = p.getType().split("::", 2);
 					String objectType = types[0];
 					String childType = types[1];
-					JsonNode childNode = rootNode.get(objectName);
-					if (childNode == null) {
-						if (objectType.equalsIgnoreCase("array")) {
-							ArrayNode an = mapper.createArrayNode();
-							childNode = mapper.createObjectNode();
-							setNode(childNode, childName, getParamValue(p.getName(), childType, requestParams));
-							an.add(childNode);
-							ObjectNode on = (ObjectNode) rootNode;
-							on.set(objectName, an);
-						} else {
-							childNode = mapper.createObjectNode();
-							setNode(childNode, childName, getParamValue(p.getName(), childType, requestParams));
-							ObjectNode on = (ObjectNode) rootNode;
-							on.set(objectName, childNode);
-						}
-					} else {
-						if (objectType.equalsIgnoreCase("array")) {
-							JsonNode node = ((ArrayNode) childNode).get(0);
-							setNode(node, childName, getParamValue(p.getName(), childType, requestParams));
-						} else {
-							setNode(childNode, childName, getParamValue(p.getName(), childType, requestParams));
-						}
-					}
+					setNode(getTargetNode(rootNode, objectName, objectType), childName,
+							getParamValue(p.getName(), childType, requestParams));
 				} else if (p.getType().indexOf("array") >= 0) {
 					ArrayNode an = mapper.createArrayNode();
 					String[] types = p.getType().split("::");
@@ -208,6 +186,33 @@ public class ApiRequestSender {
 		} catch (JsonProcessingException | UnsupportedEncodingException e) {
 			e.printStackTrace();
 		}
+	}
+
+	private JsonNode getTargetNode(JsonNode rootNode, String objectName, String objectType) {
+		JsonNode targetNode;
+		JsonNode searchNode = rootNode.get(objectName);
+		ObjectNode on = (ObjectNode) rootNode;
+		if (isArray(objectType)) {
+			if (searchNode == null) {
+				ArrayNode an = mapper.createArrayNode();
+				targetNode = mapper.createObjectNode();
+				an.add(targetNode);
+				on.set(objectName, an);
+			} else {
+				targetNode = ((ArrayNode) searchNode).get(0);
+			}
+		} else {
+			if (searchNode == null) {
+				targetNode = mapper.createObjectNode();
+			} else {
+				targetNode = searchNode;
+			}
+		}
+		return targetNode;
+	}
+
+	private boolean isArray(String objectType) {
+		return objectType.equalsIgnoreCase("array");
 	}
 
 	private void addNode(ArrayNode an, Object paramValue) {
