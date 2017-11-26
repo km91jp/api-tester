@@ -83,7 +83,9 @@ public class ApiTester {
 			form.addAlreadyInputs(key, value);
 		});
 		ApiTesterResponse response = requestSender.send(form.getReadMap(), requestParams);
-		addAlreadyInputs(form, response.getBody());
+		if (requestParams.get("produce").equalsIgnoreCase("application/json")) {
+			addAlreadyInputs(form, response.getBody());
+		}
 		model.addAttribute("result", response);
 		return requests(form.getSelectedApi(), form, model);
 	}

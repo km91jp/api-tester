@@ -69,25 +69,24 @@ public class ApiRequestSender {
 	}
 
 	private String getBody(HttpMethod method) {
-		InputStream responseBodyAsStream = null;
-		try {
-			responseBodyAsStream = method.getResponseBodyAsStream();
+		String body = null;
+		try (InputStream responseBodyAsStream = method.getResponseBodyAsStream()) {
+			Header contentTypeHeader = method.getResponseHeader("Content-Type");
+			if (contentTypeHeader.getValue().indexOf("application/json") >= 0) {
+				body = getJsonBody(responseBodyAsStream);
+			} else {
+				body = getXmlBody(responseBodyAsStream);
+			}
 		} catch (IOException e1) {
 			e1.printStackTrace();
 		}
-		Header contentTypeHeader = method.getResponseHeader("Content-Type");
-		if (contentTypeHeader.getValue().indexOf("application/json") >= 0) {
-			return getJsonBody(responseBodyAsStream);
-		} else {
-			return getXmlBody(responseBodyAsStream);
-		}
+		return body;
 	}
 
 	private String getXmlBody(InputStream responseBodyAsStream) {
 		String xmlStr = null;
-		try {
+		try (StringWriter sw = new StringWriter()) {
 			DocumentBuilder docBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-			StringWriter sw = new StringWriter();
 			Document doc = docBuilder.parse(responseBodyAsStream);
 			Transformer xmltrans = TransformerFactory.newInstance().newTransformer();
 			xmltrans.setOutputProperty(OutputKeys.METHOD, "xml");
@@ -96,7 +95,6 @@ public class ApiRequestSender {
 			xmltrans.transform(new DOMSource(doc), new StreamResult(sw));
 			sw.flush();
 			xmlStr = sw.toString();
-			sw.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
